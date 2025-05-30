@@ -1,0 +1,76 @@
+FROM nvidia/cuda:11.0.3-runtime-ubuntu20.04
+# FROM ubuntu:20.04
+
+# apt-get時、入力待ちをしなくなる。
+# ENV DEBIAN_FRONTEND=noninteractive
+
+# RUN apt-get update && apt-get install -y tzdata
+# ENV TZ=Asia/Tokyo
+
+# Install some basic utilities
+RUN apt update && apt upgrade -y 
+# RUN apt remove python3.6
+RUN apt install -y \
+    curl \
+    ca-certificates \
+    sudo \
+    git \
+    bzip2 \
+    libx11-6 \
+    wget \
+    nano \
+    build-essential
+
+# RUN apt install -y python3.8 
+# RUN apt install -y python3.8-dev
+# # これをするとなぜかpython3.6.9が入ってくる
+# RUN apt install -y python3.8-distutils 
+# # あくまで環境はpython3.8を推すようにする
+# RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
+# # シンボリックリンクを作成し、pipをデフォルトのバージョンにします
+# RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
+#     && python3.8 get-pip.py \
+#     && rm get-pip.py
+
+
+RUN apt install -y python3
+# pipインストールのため
+RUN apt install -y python3-distutils
+# GPyインストールのため
+RUN apt install -y python3-dev
+# pipのインストール
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
+    && python3 get-pip.py \
+    && rm get-pip.py
+
+
+
+# Create a working directory
+RUN mkdir /workspace
+WORKDIR /workspace
+
+# Create a non-root user and switch to it
+RUN adduser --disabled-password --gecos '' --shell /bin/bash user 
+RUN chown -R user:user /workspace
+RUN echo "user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-user
+USER user
+
+RUN sudo ln -s /usr/bin/python3 /usr/bin/python
+
+# 永続化領域の権限をアップデートしたいけどできない
+RUN sudo chown -R user:user /workspace
+
+RUN pip3 install ipykernel
+RUN pip3 install numpy
+RUN pip3 install pipenv
+# V100の環境、cudaドライバのバージョンに合わせる
+RUN pip3 install torch==2.0.1
+RUN pip3 install torchvision==0.15.2
+RUN pip3 install scikit-learn
+RUN pip3 install pandas
+RUN pip3 install matplotlib
+RUN pip3 install GPy
+RUN pip3 install MLflow
+RUN pip3 install pytorch-lightning
+
+CMD [ "/bin/bash" ]

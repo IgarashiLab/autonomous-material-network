@@ -1,0 +1,38 @@
+# run_networkBOの設定ファイル
+comp_input_feature_name: complete_input_features_A.csv
+max_time: 300
+
+# commonの設定を基本的に採用する
+# 個別の設定がある場合はそれを優先する
+common:
+  seed: 0
+  observed_num: 10
+  process_time:
+    head: 0
+    reset: 1
+  transfer_interval: # 知見共有なしは-1に設定
+    head: 1
+    reset: 0
+
+CT:
+  add_seed: 100 # commonのseedに加える
+  observed_num: 10
+  process_time:
+    head: 0
+    reset: 3
+
+MM:
+  add_seed: 200
+  observed_num: 10
+  process_time:
+    head: 0
+    reset: 1
+
+SP:
+  add_seed: 300
+  observed_num: 10
+  process_time:
+    head: 0
+    reset: 9
+
+# comment

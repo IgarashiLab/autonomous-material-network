@@ -1,0 +1,2 @@
+毎回val_datasetをランダムに変えるようにする。
+train_from_scratchのseed値をobserved_data_numに連動するように変更した。
