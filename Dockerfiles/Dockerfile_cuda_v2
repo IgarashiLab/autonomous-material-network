@@ -38,8 +38,8 @@ RUN apt install -y python3
 RUN apt install -y python3-distutils
 # GPyインストールのため
 RUN apt install -y python3-dev
-# pipのインストール
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
+# pipのインストール (Python 3.8用)
+RUN curl https://bootstrap.pypa.io/pip/3.8/get-pip.py -o get-pip.py \
     && python3 get-pip.py \
     && rm get-pip.py
 
@@ -72,5 +72,6 @@ RUN pip3 install matplotlib
 RUN pip3 install GPy
 RUN pip3 install MLflow
 RUN pip3 install pytorch-lightning
+RUN pip3 install ruamel.yaml
 
 CMD [ "/bin/bash" ]
