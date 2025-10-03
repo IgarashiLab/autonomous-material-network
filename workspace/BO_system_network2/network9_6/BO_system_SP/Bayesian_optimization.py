@@ -27,15 +27,15 @@ def pencil_shuffle(array, seed):
 #=======================================================
 #         Read configuration file
 #=======================================================
-# 引数から読み込む設定ファイル名を決定
+# Determine the configuration file name to read from the argument
 import sys
 
 if len(sys.argv) < 2:
-    print("エラー：設定ファイル名を引数として入力してください。")
+    print("Error: Please enter a configuration file name as an argument.")
     sys.exit(1)
 
 config_filename = sys.argv[1]
-print(f"iniファイル：{config_filename}")
+print(f"ini file：{config_filename}")
 
 config_ini = configparser.ConfigParser()
 config_ini.read(config_filename, encoding='utf-8')
@@ -290,9 +290,9 @@ if fake_observation:
     assert len(complete_input_features_file_csv) == len(complete_target_file_csv)
     
     #########
-    # 正解データと予測データのMAEの算出
+    # Calculate MAE between true data and predicted data
 
-    # 正解データをクロールする
+    # Crawl true data
     complete_target_list = []
     pred_target_list = []
     pred_target_std_list = []
@@ -302,7 +302,7 @@ if fake_observation:
         complete_dict[tuple(complete_input_features_file_csv[matID])] = matID
     for mat_ID2 in range(number_of_unobserved):
         # position_complete_data = -1
-        position_complete_data = complete_dict[tuple(unobserved_input_features_csv[mat_ID2])] # keyがなければエラー
+        position_complete_data = complete_dict[tuple(unobserved_input_features_csv[mat_ID2])] # Error if key does not exist
         # for matID in range(len(complete_input_features_file_csv)):
         #     if complete_input_features_file_csv[matID] == unobserved_input_features_csv[mat_ID2]:
         #         position_complete_data = mat_ID
@@ -325,7 +325,7 @@ if fake_observation:
         # Write the data rows
         for item1, item2, item3 in zip(complete_target_list, pred_target_list, absolute_index_list):
             writer.writerow([item1, item2, item3])
-    # stdも書き出す
+    # Also write std
     with open(f"true_estimate_std_{str(number_of_observed).zfill(4)}.csv", mode='w', newline='') as file:
         writer = csv.writer(file)
         
@@ -341,10 +341,10 @@ if fake_observation:
     print("MSE:", mse)
 
     import csv
-    # unobserved_prediction.csvに結果を追加
+    # Append results to unobserved_prediction.csv
     unobserved_prediction_file = 'unobserved_prediction.csv'
 
-    # ファイルが存在しない場合はヘッダーを追加
+    # Add header if the file does not exist
     file_exists = os.path.isfile(unobserved_prediction_file)
 
     with open(unobserved_prediction_file, mode='a', newline='') as file:
@@ -374,7 +374,7 @@ if fake_observation:
     
     assert position_of_candidates_from_complete_data >= 0 # Failed to find matched material
     #assert count_matched == 1 # Find multiple matched material
-    assert count_matched >= 1 # Possiblely no problem in some cases... (Redundant data)
+    assert count_matched >= 1 # Possibly no problem in some cases... (Redundant data)
     
     
     observed_input_features_csv.append(unobserved_input_features_csv.pop(position_of_candidates_from_unobserved))
@@ -394,4 +394,4 @@ if fake_observation:
     with open(observed_target_file_name, 'w') as f:
         writer = csv.writer(f)
         writer.writerows(observed_target_csv)
-    
+
