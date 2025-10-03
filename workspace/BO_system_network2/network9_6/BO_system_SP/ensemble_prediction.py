@@ -23,15 +23,15 @@ def denormalization(target, deviation, mean):
 #=======================================================
 #         Read configuration file
 #=======================================================
-# 引数から読み込む設定ファイル名を決定
+# Determine the configuration file name from the arguments
 import sys
 
 if len(sys.argv) < 2:
-    print("エラー：設定ファイル名を引数として入力してください。")
+    print("Error: Please provide the configuration file name as an argument.")
     sys.exit(1)
 
 config_filename = sys.argv[1]
-print(f"iniファイル：{config_filename}")
+print(f"ini file：{config_filename}")
 
 config_ini = configparser.ConfigParser()
 config_ini.read(config_filename, encoding='utf-8')
@@ -49,7 +49,7 @@ input_features_have_header = eval(config_ini.get('RUN', 'input_features_have_hea
 
 coeff_norm_D = np.array(eval(config_ini.get('RUN', 'output_deviation'))) # Default=1.0
 coeff_norm_M = np.array(eval(config_ini.get('RUN', 'output_mean'))) # Default=0.0
-# Normalize output from predefined deiviation and mean, only activate when output_normalization=False
+# Normalize output from predefined deviation and mean, only activate when output_normalization=False
 
 model_load_name_prefix = str(config_ini.get('RUN', 'model_load_name_prefix')) # Default="transferred_model_" # Recommended to end with an underscore(_)
 

@@ -16,9 +16,9 @@ This repository implements a multi-objective Bayesian Optimization network for m
 
 The system consists of three Bayesian Optimization modules:
 
-- **BO_system_CT**: Optimization for CT (Computed Tomography) properties
-- **BO_system_MM**: Optimization for MM (Mechanical Modulus) properties  
-- **BO_system_SP**: Optimization for SP (Specific Properties)
+- **BO_system_CT**: Optimization for CT (Curie Temperature) properties
+- **BO_system_MM**: Optimization for MM (Magnetic Moment) properties  
+- **BO_system_SP**: Optimization for SP (Spin Polarization) properties
 
 Each system supports:
 - Transfer learning from other systems

@@ -59,15 +59,15 @@ def denormalization(target, deviation, mean):
 #=======================================================
 #         Read configuration file
 #=======================================================
-# 引数から読み込む設定ファイル名を決定
+# Determine the configuration file name to read from the argument
 import sys
 
 if len(sys.argv) < 2:
-    print("エラー：設定ファイル名を引数として入力してください。")
+    print("Error: Please enter a configuration file name as an argument.")
     sys.exit(1)
 
 config_filename = sys.argv[1]
-print(f"iniファイル：{config_filename}")
+print(f"ini file：{config_filename}")
 
 config_ini = configparser.ConfigParser()
 config_ini.read(config_filename, encoding='utf-8')

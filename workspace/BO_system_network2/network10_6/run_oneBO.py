@@ -18,7 +18,7 @@ def extract_train_loss(file_path, mode="val_loss"):
     elif mode=="loss":
         loss_pattern = re.compile(r"(?<!val_)loss:\s+([\d\.]+)")
     else:
-        print("modeの指定がおかしいです。")
+        print("Invalid mode specified.")
         return None
 
     current_epoch = None
@@ -49,15 +49,15 @@ def extract_train_loss(file_path, mode="val_loss"):
 
 
 def main():
-    # 引数のパーサーを設定
-    parser = argparse.ArgumentParser(description="最適化処理を1回行う")
-    parser.add_argument('-s', '--system_path', required=True, help='処理対象のsystem')
-    parser.add_argument('-m', '--mode', default='no_transfer', choices=['no_transfer', 'transfer'], help='モデル学習のモード')
-    parser.add_argument('--no_BO', action='store_false', help='ベイズ最適化を実行せず、データベースを変更しないようにする。')
+    # Set up the argument parser
+    parser = argparse.ArgumentParser(description="Perform one optimization process")
+    parser.add_argument('-s', '--system_path', required=True, help='System to process')
+    parser.add_argument('-m', '--mode', default='no_transfer', choices=['no_transfer', 'transfer'], help='Mode for model training')
+    parser.add_argument('--no_BO', action='store_false', help='Do not perform Bayesian optimization and do not modify the database.')
 
     parser.set_defaults(no_BO=True)
 
-    # 引数を解析
+    # Parse arguments
     args = parser.parse_args()
 
     system_path = args.system_path
@@ -65,35 +65,35 @@ def main():
     no_BO = args.no_BO
     result_filename = 'virtual_material_search.results'
 
-    # システムディレクトリに移動
+    # Move to the system directory
     os.chdir(system_path)
 
-    # カレントディレクトリ直下のディレクトリのリストを取得
+    # Get the list of directories directly under the current directory
     directories = [d for d in os.listdir('.') if os.path.isdir(d)]
     if mode=="no_transfer":
         directories = ["no_transfer"]
 
-    # 2個同時予測モデルを省く
+    # Exclude dual prediction models
     pattern = r"transfer_[A-Z]{2}_[A-Z]{2}$"
     union_dirs = [item for item in directories if re.match(pattern, item)]
     directories = [item for item in directories if not re.match(pattern, item)]
 
-    print("処理対象のディレクトリ：",directories)
+    print("Directories to process:",directories)
 
-    # 他のsystemからscratchモデルを元ドメインモデルとして得る
+    # Obtain scratch models from other systems as base domain models
     for dir in directories:
         pattern = r"transfer_(.*)"
         match =re.match(pattern, dir)
         if match:
             model_dir = f"../BO_system_{match.group(1)}/no_transfer/"
             model_pattern=r"model_(\d+)\.h5"
-            # modelファイルをコピー
+            # Copy model files
             for filename in os.listdir(model_dir):
                 model_match=re.match(model_pattern, filename)
                 if model_match:
                     shutil.copy(os.path.join(model_dir,filename), os.path.join(dir,f"model_pre-trained_{model_match.group(1)}.h5"))
 
-    # 同時予測モデルの学習に使えるデータ数を数える
+    # Count the number of data available for training dual prediction models
     for dir in union_dirs:
         pattern = r"transfer_(.*)_(.*)"
         match = re.match(pattern, dir)
@@ -106,12 +106,12 @@ def main():
             set2 = set(map(tuple, array2))
             union_set=set1.intersection(set2)
             union_array=np.array(list(union_set))
-            print(f"{match.group(1)}と{match.group(2)}の共通合金データ数: {union_array.shape[0]}")
+            print(f"Number of common alloy data between {match.group(1)} and {match.group(2)}: {union_array.shape[0]}")
 
 
-    # モデル学習の実行
+    # Execute model training
     for dir in directories:
-        # 出力ファイルを初期化
+        # Initialize output file
         with open(os.path.join(dir,result_filename), 'w') as f:
             pass
         if dir=="no_transfer":
@@ -119,10 +119,8 @@ def main():
         else:
             subprocess.run(['python', 'transfer_learning.py', f'{dir}/_transfer_learning.ini'], stdout=open(os.path.join(dir,result_filename), 'a'))
 
-    
-
-    # モデルの選択
-    # val_lossの平均が小さいものを選択する
+    # Model selection
+    # Select the one with the smallest average val_loss
     val_loss_mean_list=[]
     for dir in directories:
         val_loss_list = extract_train_loss(os.path.join(dir, result_filename))
@@ -130,9 +128,9 @@ def main():
         val_loss_mean_list.append(np.array(val_loss_last).mean())
     min_index = val_loss_mean_list.index(min(val_loss_mean_list))
     selected_model =directories[min_index]
-    print(f"選択したモデル：{selected_model}, val_loss：{val_loss_mean_list[min_index]}")
+    print(f"Selected model: {selected_model}, val_loss: {val_loss_mean_list[min_index]}")
 
-    # 選択したモデルの学習データに対する予測結果を集約。true_estimate_train{observed_num}.csvとtrue_estimate_val{observed_num}.csvを作成
+    # Aggregate prediction results for training data of the selected model. Create true_estimate_train{observed_num}.csv and true_estimate_val{observed_num}.csv
     import glob
     def parse_list(s):
         return [float(x) for x in s.strip('[]').split()]
@@ -148,21 +146,21 @@ def main():
         df = pd.read_csv(csv_file, header=None, converters={0: parse_list, 1: parse_list})
         df_list.append(df)
 
-    # dfの要素がリストになっているので、平均値を取る
+    # Since the elements of df are lists, take the average
     for df in df_list:
         df[0] = df[0].apply(lambda x: np.mean(x))
         df[1] = df[1].apply(lambda x: np.mean(x))
     
-    # df_listのdfは同じ形状なので、各要素の平均を取り、1つのdfにまとめる
+    # Since the dfs in df_list have the same shape, take the average of each element and combine into one df
     num_df = len(df_list)
     sum_df = sum(df_list)
     mean_df_train = sum_df / num_df
     mean_df_train.columns = ['observed', 'estimated']
 
-    # 予測結果をcsvに保存
+    # Save prediction results to csv
     mean_df_train.to_csv(f"true_estimate_train_{str(obseved_num).zfill(4)}.csv", index=False)
 
-    # valデータについても同様に
+    # Similarly for val data
     csv_files = glob.glob(f"{selected_model}/predicted_???_test.csv")
     csv_files.sort()
 
@@ -172,24 +170,24 @@ def main():
         df = pd.read_csv(csv_file, header=None, converters={0: parse_list, 1: parse_list})
         df_list.append(df)
     
-    # dfの要素がリストになっているので、平均値を取る
+    # Since the elements of df are lists, take the average
     for df in df_list:
         df[0] = df[0].apply(lambda x: np.mean(x))
         df[1] = df[1].apply(lambda x: np.mean(x))
     
-    # df_listのdfは同じ形状なので、各要素の平均を取り、1つのdfにまとめる
+    # Since the dfs in df_list have the same shape, take the average of each element and combine into one df
     num_df = len(df_list)
     sum_df = sum(df_list)
     mean_df_test = sum_df / num_df
     mean_df_test.columns = ['observed', 'estimated']
     
-    # 予測結果をcsvに保存
+    # Save prediction results to csv
     mean_df_test.to_csv(f"true_estimate_test_{str(obseved_num).zfill(4)}.csv", index=False)
     
 
     full_train_data = pd.concat([mean_df_train["observed"], mean_df_test["observed"]], axis=0)
 
-    # 予測時も、学習時と同じmeanとdeviationを使うようにする
+    # Ensure the same mean and deviation are used for prediction as for training
     import configparser
 
     inifilename = f"{selected_model}/_ensemble_prediction.ini"
@@ -202,12 +200,12 @@ def main():
 
     print("DEBUG_set_mean_std:" ,system_path, selected_model, f"{full_train_data.mean():.6f}", f"{full_train_data.std():.6f}")
 
-    # 更新した設定をINIファイルに書き込む
+    # Write the updated settings to the INI file
     with open(inifilename, 'w') as configfile:
         config.write(configfile)
 
 
-    # 選択したモデルで予測とBOを実行する。
+    # Perform prediction and BO with the selected model.
     subprocess.run(['python', 'ensemble_prediction.py', f'{selected_model}/_ensemble_prediction.ini'], stdout=open(os.path.join(selected_model,result_filename), 'a'))
     if no_BO:
         subprocess.run(['python', 'Bayesian_optimization.py', f'{selected_model}/_Bayesian_optimization.ini'], stdout=open(os.path.join(selected_model,result_filename), 'a'))
